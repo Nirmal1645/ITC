@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ITC ESG Analytics Dashboard - Student Project</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root{
+    --green:#2E9E4C;
+    --green-dark:#1E7B34;
+    --green-bg:#EAF7EE;
+    --blue:#2F80C8;
+    --blue-bg:#EAF3FB;
+    --gold:#C98A1C;
+    --gold-bg:#FCF2DF;
+    --purple:#7B4FCB;
+    --ink:#22303F;
+    --muted:#68788A;
+    --card:#FFFFFF;
+    --bg:#F5F8F6;
+    --up:#1E9142;
+    --down:#D64545;
+    --radius:10px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    font-family:'Poppins', Arial, sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+  }
+  .page{
+    width:100%;
+    display:flex; flex-direction:column;
+    padding:12px 12px 24px;
+    gap:12px;
+    max-width:560px;
+    margin:0 auto;
+  }
+
+  .header{
+    background:linear-gradient(120deg,#8B1E3F 0%,var(--gold) 100%);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    color:#fff;
+  }
+  .header .titleblock{display:flex; align-items:center; gap:10px;}
+  .header .leaf{font-size:26px; flex:0 0 auto;}
+  .header h1{margin:0; font-size:19px; font-weight:800; letter-spacing:.2px;}
+  .header p{margin:2px 0 0; font-size:12px; opacity:.95; font-weight:500;}
+  .header .meta{display:flex; gap:6px; font-size:11px; font-weight:600; flex-wrap:wrap; margin-top:10px;}
+  .header .meta div{background:rgba(255,255,255,0.18); border-radius:8px; padding:6px 10px;}
+
+  .scorecards{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:8px;
+  }
+  .scorecard{
+    background:var(--card); border-radius:var(--radius); padding:12px 8px;
+    box-shadow:0 1px 4px rgba(34,48,63,0.06);
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    border:1px solid #ECF1EC;
+  }
+  .scorecard .icon{
+    width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px; margin-bottom:4px;
+  }
+  .scorecard .label{font-size:9.5px; color:var(--muted); font-weight:700; letter-spacing:.2px; text-transform:uppercase; line-height:1.25;}
+  .scorecard .score{font-size:19px; font-weight:800; color:var(--ink); margin:3px 0;}
+  .scorecard .score small{font-size:10px; font-weight:600; color:var(--muted);}
+  .scorecard .rating{font-size:10px; font-weight:700; color:var(--green-dark);}
+  .scorecard .delta{font-size:9.5px; margin-top:3px; font-weight:700;}
+  .delta.up{color:var(--up);} .delta.down{color:var(--down);}
+
+  .body{display:flex; flex-direction:column; gap:12px;}
+  .col{display:flex; flex-direction:column; gap:12px;}
+
+  .panel{
+    background:var(--card); border-radius:var(--radius); overflow:hidden;
+    box-shadow:0 1px 4px rgba(34,48,63,0.06); border:1px solid #ECF1EC;
+    display:flex; flex-direction:column;
+  }
+  .panel-header{
+    padding:10px 14px; font-weight:700; font-size:14px; letter-spacing:.2px;
+    display:flex; align-items:center; gap:6px; color:#fff;
+  }
+  .panel-header.env{background:linear-gradient(90deg,var(--green-dark),var(--green));}
+  .panel-header.soc{background:linear-gradient(90deg,#1E5FA8,var(--blue));}
+  .panel-header.gov{background:linear-gradient(90deg,#A06A0E,var(--gold));}
+  .panel-body{padding:12px 14px; display:flex; flex-direction:column; gap:12px;}
+
+  .kpirow{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
+  .kpirow.soc3{grid-template-columns:repeat(2,1fr);}
+  .kpi{border:1px solid #EEF2EE; background:#FBFCFB; border-radius:8px; padding:8px 10px; text-align:left;}
+  .kpi .t{font-size:9.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.1px; line-height:1.25;}
+  .kpi .v{font-size:16px; font-weight:800; margin-top:3px; color:var(--ink); line-height:1.15;}
+  .kpi .v small{font-size:10px; font-weight:600; color:var(--muted);}
+  .kpi .d{font-size:9.5px; font-weight:700; margin-top:3px;}
+
+  .charts2{display:flex; flex-direction:column; gap:16px;}
+  .chart-col{display:flex; flex-direction:column;}
+  .chart-title{font-size:10.5px;color:var(--muted);font-weight:700;margin-bottom:6px; text-transform:uppercase; letter-spacing:.1px;}
+  .chart-box{position:relative; height:180px;}
+
+  .donut-box{position:relative; height:190px;}
+  .donut-box canvas{position:relative; z-index:1;}
+  .donut-center{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    pointer-events:none; text-align:center; z-index:2;
+  }
+  .donut-center b{font-size:16px; display:block; color:var(--ink); line-height:1.05;}
+  .donut-center span{font-size:9.5px; color:var(--muted);}
+
+  .bottom2{display:flex; flex-direction:column; gap:12px;}
+  .gauge-panel{background:var(--card); border-radius:var(--radius); border:1px solid #ECF1EC; box-shadow:0 1px 4px rgba(34,48,63,0.06); padding:14px 10px 8px; text-align:center; display:flex; flex-direction:column;}
+  .gauge-panel h3{margin:0 0 6px 0; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.2px; font-weight:700;}
+  .gauge-box{position:relative; display:flex; align-items:flex-end; justify-content:center;}
+  .gauge-box .inner{position:relative; width:100%; max-width:240px; aspect-ratio:2/1;}
+  .gauge-box canvas{position:absolute; inset:0; width:100%; height:100%;}
+  .gauge-center{
+    position:absolute; left:0; right:0; bottom:-2px;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    pointer-events:none;
+  }
+  .gauge-center b{font-size:24px; color:var(--ink); display:block; line-height:1;}
+  .gauge-center small{color:var(--muted); font-size:11px;}
+  .gauge-center .rate{color:var(--green-dark); font-weight:800; font-size:11px; margin-top:2px;}
+
+  .targets-panel{background:var(--card); border-radius:var(--radius); border:1px solid #ECF1EC; box-shadow:0 1px 4px rgba(34,48,63,0.06); overflow:hidden; display:flex; flex-direction:column;}
+  .targets-panel .panel-header{background:linear-gradient(90deg,var(--green-dark),var(--blue)); font-size:13px;}
+  .target-row{display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid #F1F4F1; font-size:12px; gap:8px;}
+  .target-row:last-child{border-bottom:none;}
+  .target-row .name{color:var(--ink); font-weight:600; display:flex; align-items:center; gap:5px;}
+  .target-row .val{font-weight:800; color:var(--green-dark); white-space:nowrap;}
+
+  .sdg-strip{
+    background:var(--card); border-radius:var(--radius); border:1px solid #ECF1EC; box-shadow:0 1px 4px rgba(34,48,63,0.06);
+    padding:14px; display:flex; flex-direction:column; gap:10px;
+  }
+  .sdg-strip .title{font-size:13px; font-weight:800; color:var(--ink); line-height:1.25;}
+  .sdg-icons{display:flex; flex-wrap:wrap; gap:6px;}
+  .sdg{width:34px;height:34px;border-radius:6px; color:#fff; font-size:9px; font-weight:800; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; line-height:1.05; padding:1px;}
+  .sdg-strip .foot{font-size:11px; font-weight:700; color:var(--green-dark);}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header" style="padding:6px 16px;">
+    <div class="titleblock">
+      <div class="leaf">🌾</div>
+      <div>
+        <h1>ITC ESG</h1>
+        <p>Sustainability 2.0 · FY 2025-26</p>
+      </div>
+    </div>
+    <div class="meta">
+      <div>NSE: ITC</div>
+      <div>Carbon Positive 21 Yrs</div>
+      <div>Water Positive 24 Yrs</div>
+      <div>MSCI 'AA' · 8 Yrs</div>
+    </div>
+  </div>
+
+  <div class="scorecards">
+    <div class="scorecard">
+      <div class="icon" style="background:var(--green-bg);color:var(--green-dark);">🌍</div>
+      <div class="label">S&amp;P Global ESG Score</div>
+      <div class="score">81<small>/100</small></div>
+      <div class="rating">Industry Leader</div>
+      <div class="delta up">CSA Score 81</div>
+    </div>
+    <div class="scorecard">
+      <div class="icon" style="background:var(--gold-bg);color:var(--gold);">🏅</div>
+      <div class="label">MSCI ESG Rating</div>
+      <div class="score">AA</div>
+      <div class="rating">8th Consecutive Yr</div>
+      <div class="delta up">Sector Leader</div>
+    </div>
+    <div class="scorecard">
+      <div class="icon" style="background:var(--blue-bg);color:var(--blue);">⚡</div>
+      <div class="label">Renewable Energy</div>
+      <div class="score">51<small>%</small></div>
+      <div class="rating">Of Total Energy</div>
+      <div class="delta up">FY 2025-26</div>
+    </div>
+    <div class="scorecard">
+      <div class="icon" style="background:#F1EBFB;color:var(--purple);">🏛</div>
+      <div class="label">Board Independence</div>
+      <div class="score">50<small>%</small></div>
+      <div class="rating">8 of 16 Directors</div>
+      <div class="delta up">2 Women Directors</div>
+    </div>
+    <div class="scorecard">
+      <div class="icon" style="background:#E6F7F1;color:#0E8C6B;">₹</div>
+      <div class="label">Market Cap</div>
+      <div class="score" style="font-size:12px;">₹3.60L Cr</div>
+      <div class="rating">US$38.0 Bn</div>
+      <div class="delta up">As on 31.03.2026</div>
+    </div>
+    <div class="scorecard">
+      <div class="icon" style="background:var(--gold-bg);color:var(--gold);">📈</div>
+      <div class="label">Gross Revenue</div>
+      <div class="score" style="font-size:12px;">₹80,867<small> Cr</small></div>
+      <div class="rating">FY 2025-26</div>
+      <div class="delta up">▲ 10.1% YoY</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="col">
+      <div class="panel">
+        <div class="panel-header env">🌿 Environment KPIs</div>
+        <div class="panel-body">
+          <div class="kpirow">
+            <div class="kpi"><div class="t">Renewable Energy Share</div><div class="v">51%</div><div class="d up">▲ vs 50% FY24</div></div>
+            <div class="kpi"><div class="t">Carbon Positive Streak</div><div class="v">21<small> yrs</small></div><div class="d up">Sustained</div></div>
+            <div class="kpi"><div class="t">Water Positive Streak</div><div class="v">24<small> yrs</small></div><div class="d up">Sustained</div></div>
+            <div class="kpi"><div class="t">Plastic Neutral Streak</div><div class="v">5<small> yrs</small></div><div class="d up">72,500+ MT</div></div>
+          </div>
+          <div class="charts2">
+            <div class="chart-col">
+              <div class="chart-title">Sustainability Positive Streaks (Years)</div>
+              <div class="chart-box"><canvas id="envBar"></canvas></div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-title">FY26 Energy Mix</div>
+              <div class="donut-box">
+                <canvas id="envDonut"></canvas>
+                <div class="donut-center"><b>51%</b><span>Renewable</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header gov">🏛 Governance KPIs</div>
+        <div class="panel-body">
+          <div class="kpirow">
+            <div class="kpi"><div class="t">Board Size</div><div class="v">16</div><div class="d up">Directors</div></div>
+            <div class="kpi"><div class="t">Board Independence</div><div class="v">50%</div><div class="d up">8 Independent NEDs</div></div>
+            <div class="kpi"><div class="t">Women Directors</div><div class="v">12.5%</div><div class="d up">2 of 16</div></div>
+            <div class="kpi"><div class="t">MSCI Rating Tenure</div><div class="v">8<small> yrs</small></div><div class="d up">'AA' Sustained</div></div>
+          </div>
+          <div class="charts2">
+            <div class="chart-col">
+              <div class="chart-title">FY26 Financial Performance (₹ Cr)</div>
+              <div class="chart-box"><canvas id="govBar"></canvas></div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-title">Board Composition</div>
+              <div class="donut-box">
+                <canvas id="govDonut"></canvas>
+                <div class="donut-center"><b>16</b><span>Directors</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="panel">
+        <div class="panel-header soc">👥 Social &amp; Economic KPIs</div>
+        <div class="panel-body">
+          <div class="kpirow soc3">
+            <div class="kpi"><div class="t">Total Employees</div><div class="v">22,041<small>+</small></div><div class="d up">As on 31 Mar</div></div>
+            <div class="kpi"><div class="t">Sustainable Livelihoods</div><div class="v">90<small> Lakh+</small></div><div class="d up">Value Chain Reach</div></div>
+            <div class="kpi"><div class="t">CSR Spend (FY24)</div><div class="v">₹404<small> Cr</small></div><div class="d up">▲ vs ₹363 Cr</div></div>
+          </div>
+          <div class="kpirow soc3">
+            <div class="kpi"><div class="t">PAT (FY26)</div><div class="v">₹20,286<small> Cr</small></div><div class="d up">Net Profit</div></div>
+            <div class="kpi"><div class="t">Dividend / Share</div><div class="v">₹14.50</div><div class="d up">FY26 Total</div></div>
+            <div class="kpi"><div class="t">Plastic Waste Managed</div><div class="v">72.5<small>K MT</small></div><div class="d up">5th Yr Neutral</div></div>
+          </div>
+          <div class="charts2">
+            <div class="chart-col">
+              <div class="chart-title">CSR Spend Trend (₹ Cr)</div>
+              <div class="chart-box"><canvas id="socBar"></canvas></div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-title">FY26 Revenue Split</div>
+              <div class="donut-box">
+                <canvas id="socDonut"></canvas>
+                <div class="donut-center"><b>₹80.9K</b><span>Cr Revenue</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom2">
+        <div class="gauge-panel">
+          <h3>S&amp;P Global ESG Score</h3>
+          <div class="gauge-box">
+            <div class="inner">
+              <canvas id="gauge"></canvas>
+              <div class="gauge-center"><b>81</b><small>/100</small><div class="rate">Industry Leader</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="targets-panel">
+          <div class="panel-header">Sustainability 2.0 Targets — 2030</div>
+          <div class="target-row"><span class="name">🌫 GHG Reduction (vs FY19)</span><span class="val">-50%</span></div>
+          <div class="target-row"><span class="name">⚡ Renewable Energy</span><span class="val">50%✓</span></div>
+          <div class="target-row"><span class="name">💧 Water Intake Reduction</span><span class="val">-40%</span></div>
+          <div class="target-row"><span class="name">🌾 Climate-Smart Agri Acres</span><span class="val">4.0 Mn</span></div>
+          <div class="target-row"><span class="name">🏘 Climate-Smart Villages</span><span class="val">10,000</span></div>
+          <div class="target-row"><span class="name">🌳 Biodiversity Acres</span><span class="val">1.0 Mn</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sdg-strip">
+    <div class="title">Our Contribution to the SDGs</div>
+    <div class="sdg-icons">
+      <div class="sdg" style="background:#4C9F38;">3</div>
+      <div class="sdg" style="background:#C5192D;">4</div>
+      <div class="sdg" style="background:#FF3A21;">5</div>
+      <div class="sdg" style="background:#26BDE2;">6</div>
+      <div class="sdg" style="background:#FCC30B;color:#5c4400;">7</div>
+      <div class="sdg" style="background:#A21942;">8</div>
+      <div class="sdg" style="background:#FD6925;">9</div>
+      <div class="sdg" style="background:#FD9D24;color:#5c3d00;">11</div>
+      <div class="sdg" style="background:#BF8B2E;">12</div>
+      <div class="sdg" style="background:#3F7E44;">13</div>
+      <div class="sdg" style="background:#19486A;">17</div>
+    </div>
+    <div class="foot">Sustainability 2.0 • Triple Bottom Line • Nation Building</div>
+  </div>
+
+</div>
+
+<script>
+Chart.defaults.font.family = "'Poppins', Arial, sans-serif";
+const green = '#1E7B34', navy = '#1E5FA8', gold = '#C98A1C', grey = '#C7D0D8', maroon = '#8B1E3F';
+
+function donutLabeled(id, labels, data, colors, suffix){
+  new Chart(document.getElementById(id), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:2, borderColor:'#fff' }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'66%',
+      plugins:{
+        legend:{ position:'right', labels:{ boxWidth:6, font:{ size:7 }, padding:4 } },
+        datalabels:{
+          color:'#fff',
+          font:{ size:8, weight:'700' },
+          formatter:(value)=> value + (suffix || ''),
+          textStrokeColor:'rgba(0,0,0,0.35)',
+          textStrokeWidth:2
+        }
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
+}
+
+new Chart(document.getElementById('envBar'), {
+  type:'bar',
+  data:{
+    labels:['Carbon Positive','Water Positive','Waste Recycling +ve','MSCI \'AA\' Streak'],
+    datasets:[{ data:[21,24,19,8], backgroundColor:[green,navy,gold,maroon], borderRadius:4, maxBarThickness:26 }]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c => c.raw + ' years' } },
+      datalabels:{ anchor:'end', align:'right', color:'#22303F', font:{ size:7, weight:'700' }, formatter:v=>v+' yrs' } },
+    scales:{ x:{ ticks:{ font:{ size:6.5 } }, grid:{ color:'#EEF2EE' } }, y:{ ticks:{ font:{ size:6.5 } }, grid:{ display:false } } }
+  },
+  plugins:[ChartDataLabels]
+});
+
+donutLabeled('envDonut', ['Renewable','Non-Renewable'], [51,49], [green, grey], '%');
+
+new Chart(document.getElementById('govBar'), {
+  type:'bar',
+  data:{
+    labels:['Gross Revenue','EBITDA','PAT'],
+    datasets:[{ data:[80867,25208,20286], backgroundColor:gold, borderRadius:4, maxBarThickness:28 }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c => '₹' + c.raw.toLocaleString() + ' Cr' } },
+      datalabels:{ anchor:'end', align:'top', color:'#22303F', font:{ size:6.5, weight:'700' }, formatter:v=>'₹'+(v/1000).toFixed(1)+'K Cr' } },
+    scales:{ y:{ ticks:{ font:{ size:6.5 }, callback:v=>(v/1000)+'K' }, grid:{ color:'#EEF2EE' } }, x:{ ticks:{ font:{ size:6.5 } }, grid:{ display:false } } }
+  },
+  plugins:[ChartDataLabels]
+});
+
+donutLabeled('govDonut', ['CMD','Exec. Directors','Indep. NEDs','Non-Indep. NEDs'], [1,3,8,4], [maroon, gold, green, navy], '');
+
+new Chart(document.getElementById('socBar'), {
+  type:'bar',
+  data:{
+    labels:['17-18','20-21','21-22','23-24'],
+    datasets:[{ data:[291,357.8,363.37,404.05], backgroundColor:navy, borderRadius:4, maxBarThickness:24 }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c => '₹' + c.raw + ' Cr' } } },
+    scales:{ y:{ ticks:{ callback:v => '₹'+v, font:{ size:6.5 } }, grid:{ color:'#EEF2EE' } }, x:{ ticks:{ font:{ size:6.5 } }, grid:{ display:false } } }
+  }
+});
+
+donutLabeled('socDonut', ['EBITDA','Other Costs'], [25208,55659], [green, grey], '');
+
+new Chart(document.getElementById('gauge'), {
+  type:'doughnut',
+  data:{
+    datasets:[{
+      data:[81,19],
+      backgroundColor:[green,'#E7ECEF'],
+      borderWidth:0,
+      circumference:180,
+      rotation:270
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, cutout:'72%',
+    plugins:{ legend:{ display:false }, tooltip:{ enabled:false } }
+  }
+});
+</script>
+</body>
+</html>
